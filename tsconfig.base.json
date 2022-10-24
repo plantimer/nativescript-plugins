@@ -20,7 +20,8 @@
       }
     ],
     "paths": {
-      "@demo/shared": ["tools/demo/index.ts"]
+      "@demo/shared": ["tools/demo/index.ts"],
+      "@plantimer/nativescript-auth0": ["packages/nativescript-auth0/index.d.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

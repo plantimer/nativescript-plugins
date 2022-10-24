@@ -1,0 +1,57 @@
+{
+  "name": "@plantimer/nativescript-auth0",
+  "version": "0.1.0",
+  "description": "Add a plugin description",
+  "main": "index",
+  "typings": "index.d.ts",
+  "nativescript": {
+    "platforms": {
+      "ios": "6.0.0",
+      "android": "6.0.0"
+    }
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "peerDependencies": {
+    "nativescript-inappbrowser": "^3.1.2",
+    "crypto-es": "^1.2.7",
+    "@nativescript/secure-storage": "^3.0.0",
+    "@bradmartin/nativescript-urlhandler": "^2.0.1",
+    "rxjs": "^7.5.0"
+  },
+  "devDependencies": {
+    "@angular/core": "^14.2.0",
+    "@nativescript/core": "~8.3.4",
+    "@nativescript/android": "~8.3.1",
+    "@nativescript/ios": "~8.3.3",
+    "@nativescript/angular": "^14.2.0",
+    "typescript": "^4.5.5",
+    "prompt": "^1.0.0",
+    "rimraf": "^2.6.3",
+    "tslint": "^5.12.1",
+    "semver": "^5.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/plantimer/nativescript-plugins.git"
+  },
+  "keywords": [
+    "NativeScript",
+    "JavaScript",
+    "TypeScript",
+    "iOS",
+    "Android"
+  ],
+  "author": {
+    "name": "Joseph Martell",
+    "email": "contact@josephmartell.com"
+  },
+  "bugs": {
+    "url": "https://github.com/plantimer/nativescript-plugins/issues"
+  },
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/plantimer/nativescript-plugins",
+  "readmeFilename": "README.md",
+  "bootstrapper": "@nativescript/plugin-seed"
+}

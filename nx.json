@@ -1,5 +1,5 @@
 {
-  "npmScope": "nativescript",
+  "npmScope": "plantimer",
   "affected": {
     "defaultBase": "master"
   },

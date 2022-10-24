@@ -55,12 +55,19 @@ module.exports = {
       },
     },
     '⚙️': {
-      script: `npx cowsay "@nativescript/* packages will keep your ⚙️ cranking"`,
-      description: '_____________  @nativescript/*  _____________',
+      script: `npx cowsay "@plantimer/* packages will keep your ⚙️ cranking"`,
+      description: '_____________  @plantimer/*  _____________',
     },
     // packages
     // build output is always in dist/packages
-    '@nativescript': {
+    '@plantimer': {
+      // @plantimer/nativescript-auth0
+      'nativescript-auth0': {
+        build: {
+          script: 'nx run nativescript-auth0:build.all',
+          description: '@plantimer/nativescript-auth0: Build',
+        },
+      },
       'build-all': {
         script: 'nx run-many --target=build.all --all',
         description: 'Build all packages',
@@ -71,8 +78,12 @@ module.exports = {
       description: '_____________  Focus (VS Code supported)  _____________',
     },
     focus: {
+      'nativescript-auth0': {
+        script: 'nx run nativescript-auth0:focus',
+        description: 'Focus on @plantimer/nativescript-auth0',
+      },
       reset: {
-        script: 'nx g @nativescript/plugin-tools:focus-packages',
+        script: 'nx g @plantimer/plugin-tools:focus-packages',
         description: 'Reset Focus',
       },
     },
