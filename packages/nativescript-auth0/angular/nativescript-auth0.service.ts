@@ -5,9 +5,13 @@ import { environment } from './environment';
 export class NativescriptAuth0Service {
   private auth0 = new NativescriptAuth0();
 
-  async connect() {
+  async connect(): Promise<void> {
     this.auth0.setConfig(environment);
     return await this.auth0.connect();
+  }
+
+  async disconnect(): Promise<void> {
+    return await this.auth0.disconnect();
   }
 
   getAccessToken(): Subject<string> {

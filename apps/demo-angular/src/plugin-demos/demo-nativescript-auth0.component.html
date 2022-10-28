@@ -1,8 +1,5 @@
-<ActionBar title="nativescript-auth0" class="action-bar"> </ActionBar>
-<StackLayout class="p-20">
-  <ScrollView class="h-full">
-    <StackLayout>
-      <Button text="Test nativescript-auth0" (tap)="demoShared.testIt()" class="btn btn-primary"></Button>
-    </StackLayout>
-  </ScrollView>
+<StackLayout>
+  <Label text="Use your settings in demo-nativescript-auth0.module.ts" class="m-3" textWrap="true"></Label>
+  <Button *ngIf="!connected" text="Connect !" class="btn" (tap)="connect()"></Button>
+  <Button *ngIf="connected" text="Disconnect !" class="btn" (tap)="disconnect()"></Button>
 </StackLayout>
