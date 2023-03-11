@@ -3,10 +3,11 @@
     <ActionBar title="Plugin Demos" icon="" class="action-bar"/>
   </Page.actionBar>
   <StackLayout class="p-20">
+    <Label text="SignUp" class="h2 text-center" tap="{{ signUp() }}"/>
     <ScrollView class="h-full">
       <StackLayout>
         <Button text="add a package first" tap="{{ viewDemo }}" class="btn btn-primary view-demo"/>
-<Button text="nativescript-auth0" tap="{{ viewDemo }}" class="btn btn-primary view-demo"/>
+        <Button text="nativescript-auth0" tap="{{ viewDemo }}" class="btn btn-primary view-demo"/>
       </StackLayout>
     </ScrollView>
   </StackLayout>

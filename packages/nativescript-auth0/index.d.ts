@@ -1,11 +1,10 @@
+import { InAppBrowserOptions } from 'nativescript-inappbrowser/InAppBrowser.common';
 import { NativescriptAuth0Common } from './common';
-import { Subject } from 'rxjs';
 
-export declare class NativescriptAuth0 extends NativescriptAuth0Common {
-  getAccessToken(): Subject<string>;
-  connect(): Promise<void>;
-  disconnect(): Promise<void>;
-}
+export type Config = {
+  auth0Config: Auth0Config;
+  browserConfig?: InAppBrowserOptions;
+};
 
 export type Auth0Config = {
   clientId: string;
@@ -14,3 +13,5 @@ export type Auth0Config = {
   redirectUri: string;
   scope: string;
 };
+
+export const NativescriptAuth0: NativescriptAuth0Common;

@@ -4,12 +4,13 @@
     "sourceMap": true,
     "declaration": true,
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "noEmitHelpers": true,
-    "target": "es2017",
+    "target": "es2021",
     "module": "esnext",
-    "lib": ["es2017", "dom"],
+    "lib": ["es2021"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
@@ -21,7 +22,8 @@
     ],
     "paths": {
       "@demo/shared": ["tools/demo/index.ts"],
-      "@plantimer/nativescript-auth0": ["packages/nativescript-auth0/index.d.ts"]
+      "@plantimer/nativescript-auth0": ["packages/nativescript-auth0/index.d.ts"],
+      "@plantimer/nativescript-auth0/angular": ["packages/nativescript-auth0/angular/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
