@@ -1,10 +1,6 @@
 # @plantimer/nativescript-auth0
 
-Packages are published to github.com under the `@plantimer` scope so you may need an extra step to login.
-
 ```bash
-npm login --scope=@plantimer --registry=https://npm.pkg.github.com
-
 npm install @plantimer/nativescript-auth0
 ```
 
