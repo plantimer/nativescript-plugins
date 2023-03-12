@@ -1,4 +1,4 @@
-import { Http, HttpResponse, Utils } from '@nativescript/core';
+import { Http, HttpResponse, isAndroid, Utils } from '@nativescript/core';
 import { Subject } from 'rxjs';
 import CryptoES from 'crypto-es';
 import { SecureStorage } from '@nativescript/secure-storage';
@@ -50,13 +50,15 @@ export class NativescriptAuth0Common {
       this.accessToken$.next(access_token_response.content.toJSON().access_token);
     });
 
-    InAppBrowser.mayLaunchUrl(this.prepareSignInAuthUrl(), []);
+    if (isAndroid) {
+      InAppBrowser.mayLaunchUrl(this.prepareSignInAuthUrl(''), []);
+    }
 
     return this;
   }
 
-  async signIn() {
-    const authorizeUrl: string = this.prepareSignInAuthUrl();
+  async signIn(loginHint = '') {
+    const authorizeUrl: string = this.prepareSignInAuthUrl(loginHint);
 
     if (!(await InAppBrowser.isAvailable())) {
       throw ConnectionErrors.unavailableBrowser();
@@ -131,10 +133,10 @@ export class NativescriptAuth0Common {
     return refreshToken;
   }
 
-  protected prepareSignInAuthUrl(): string {
+  protected prepareSignInAuthUrl(loginHint): string {
     const challenge: string = Base64.stringify(sha256(this.verifier)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
-    return `https://${this.config.auth0Config.domain}/authorize?audience=${this.config.auth0Config.audience}&scope=offline_access&response_type=code&client_id=${this.config.auth0Config.clientId}&redirect_uri=${this.config.auth0Config.redirectUri}&code_challenge=${challenge}&code_challenge_method=S256`;
+    return `https://${this.config.auth0Config.domain}/authorize?audience=${this.config.auth0Config.audience}&scope=offline_access&response_type=code&client_id=${this.config.auth0Config.clientId}&redirect_uri=${this.config.auth0Config.redirectUri}&code_challenge=${challenge}&code_challenge_method=S256&login_hint=${loginHint}`;
   }
 
   private async openInAppBrowser(authorizeUrl: string): Promise<string> {
