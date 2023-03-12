@@ -1,6 +1,6 @@
 {
   "name": "@plantimer/nativescript-auth0",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Plugin wrapper for Auth0. It uses InAppBrowser and SecureStorage to safely authenticate users.",
   "main": "index",
   "typings": "index.d.ts",
@@ -17,7 +17,6 @@
     "rxjs": "^7.5.0"
   },
   "devDependencies": {
-    "@angular/core": "^14.2.0",
     "@nativescript/core": "~8.4.0",
     "@nativescript/android": "~8.4.0",
     "@nativescript/ios": "~8.4.0",
@@ -37,8 +36,7 @@
     "Auth0",
     "Nativescript",
     "iOS",
-    "Android",
-    "Angular"
+    "Android"
   ],
   "author": {
     "name": "Joseph Martell",

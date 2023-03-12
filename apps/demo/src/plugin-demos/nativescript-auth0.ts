@@ -1,6 +1,5 @@
-import { Observable, EventData, Page } from '@nativescript/core';
+import { EventData, Page } from '@nativescript/core';
 import { DemoSharedNativescriptAuth0 } from '@demo/shared';
-import {} from '@plantimer/nativescript-auth0';
 
 export function navigatingTo(args: EventData) {
   const page = <Page>args.object;
