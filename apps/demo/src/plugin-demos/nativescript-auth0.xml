@@ -1,14 +1,28 @@
 <Page xmlns="http://schemas.nativescript.org/tns.xsd" navigatingTo="navigatingTo" class="page">
-    <Page.actionBar>
-        <ActionBar title="nativescript-auth0" icon="" class="action-bar">
-        </ActionBar>
-    </Page.actionBar>
-    <StackLayout class="p-20">
-        <ScrollView class="h-full">
-          <StackLayout>
-            <Button text="Test nativescript-auth0" tap="{{ testIt }}" class="btn btn-primary"/>
+  <Page.actionBar>
+    <ActionBar title="nativescript-auth0" icon="" class="action-bar">
+    </ActionBar>
+  </Page.actionBar>
+  <StackLayout class="p-20">
+    <StackLayout>
+      <Label text="Auth0 settings"/>
 
-          </StackLayout>
-        </ScrollView>
+      <TextField hint="Client ID" text="{{ clientId }}" textChange="{{ clientId }}"/>
+      <TextField hint="Domain" text="{{ domain }}" textChange="{{ domain }}"/>
+      <TextField hint="Audience" text="{{ audience }}" textChange="{{ audience }}"/>
+      <TextField hint="Redirect URI" text="{{ redirectUri }}" textChange="{{ redirectUri }}"/>
+
+      <Button text="Check if everything has been set" tap="{{ logData }}"/>
     </StackLayout>
+
+    <StackLayout>
+      <Button text="Sign up" tap="{{ signUp }}" class="btn btn-primary"/>
+      <Button text="Sign in" tap="{{ signIn }}" class="btn btn-primary"/>
+      <Button text="Logout" tap="{{ logOut }}" class="btn btn-primary"/>
+      <Button text="Get access token" tap="{{ getAccessToken }}" class="btn btn-primary"/>
+
+      <Label text="Access token:"/>
+      <Label text="{{ accessToken }}" />
+    </StackLayout>
+  </StackLayout>
 </Page>

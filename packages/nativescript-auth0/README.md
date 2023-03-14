@@ -1,3 +1,7 @@
+# IMPORTANT
+This plugin is not production ready and is still in development.
+Feel free to open pull requests and issues !
+
 # @plantimer/nativescript-auth0
 
 ```bash

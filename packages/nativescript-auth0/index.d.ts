@@ -11,7 +11,7 @@ export type Auth0Config = {
   domain: string;
   audience: string;
   redirectUri: string;
-  scope: string;
+  scope?: string;
 };
 
 export const NativescriptAuth0: NativescriptAuth0Common;

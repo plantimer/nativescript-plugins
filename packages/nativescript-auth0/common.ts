@@ -1,4 +1,4 @@
-import { Http, HttpResponse, isAndroid, Utils } from '@nativescript/core';
+import { ApplicationSettings, Http, HttpResponse, isAndroid, Utils } from '@nativescript/core';
 import { Subject } from 'rxjs';
 import CryptoES from 'crypto-es';
 import { SecureStorage } from '@nativescript/secure-storage';
@@ -10,17 +10,16 @@ import Base64 = CryptoES.enc.Base64;
 import sha256 = CryptoES.SHA256;
 
 export class NativescriptAuth0Common {
-  protected fetchedRefreshToken$ = new Subject<string>();
-  protected verifier: string = NativescriptAuth0Common.getRandomValues(32);
-  private accessToken$ = new Subject<string>();
   private config: Config;
+  protected verifier: string;
+  accessToken$ = new Subject<string>();
 
   /**
    * Get a random string value
    *
    * @param size between 43 and 128 (default 128)
    */
-  protected static getRandomValues(size) {
+  private static getRandomValues(size) {
     size = size >= 43 && size <= 128 ? size : 128;
 
     let benchStr = '';
@@ -34,21 +33,7 @@ export class NativescriptAuth0Common {
 
   setUp(config: Config) {
     this.config = config;
-
-    this.fetchedRefreshToken$.subscribe(async (refreshToken) => {
-      const access_token_response: HttpResponse = await Http.request({
-        url: 'https://' + this.config.auth0Config.domain + '/oauth/token',
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        content: JSON.stringify({
-          grant_type: 'refresh_token',
-          client_id: this.config.auth0Config.clientId,
-          refresh_token: refreshToken,
-          audience: this.config.auth0Config.audience,
-        }),
-      });
-      this.accessToken$.next(access_token_response.content.toJSON().access_token);
-    });
+    this.verifier = NativescriptAuth0Common.getRandomValues(32);
 
     if (isAndroid) {
       InAppBrowser.mayLaunchUrl(this.prepareSignInAuthUrl(''), []);
@@ -58,35 +43,21 @@ export class NativescriptAuth0Common {
   }
 
   async signIn(loginHint = '') {
-    const authorizeUrl: string = this.prepareSignInAuthUrl(loginHint);
-
-    if (!(await InAppBrowser.isAvailable())) {
-      throw ConnectionErrors.unavailableBrowser();
-    }
-
-    const code = await this.openInAppBrowser(authorizeUrl);
-    const refreshToken = await this.fetchRefreshToken(code, this.verifier);
-    this.fetchedRefreshToken$.next(refreshToken);
+    const code = await this.fetchCodeInAppBrowser(this.prepareSignInAuthUrl(loginHint));
+    await this.fetchRefreshToken(code, this.verifier);
   }
 
   async signUp(loginHint = '') {
-    const authorizeUrl: string = this.prepareSignUpAuthUrl(loginHint);
-
-    if (!(await InAppBrowser.isAvailable())) {
-      throw ConnectionErrors.unavailableBrowser();
-    }
-
-    const refreshToken = await this.openInAppBrowser(authorizeUrl);
-    this.fetchedRefreshToken$.next(refreshToken);
+    const code = await this.fetchCodeInAppBrowser(this.prepareSignUpAuthUrl(loginHint));
+    await this.fetchRefreshToken(code, this.verifier);
   }
 
-  getAccessToken(): Subject<string> {
-    return this.accessToken$;
-  }
-
-  async disconnect(): Promise<void> {
+  async logOut(): Promise<void> {
     const secureStorage = new SecureStorage();
     secureStorage.removeSync({ key: 'refresh_token' });
+    secureStorage.removeSync({ key: 'access_token' });
+
+    ApplicationSettings.remove('access_token_expire');
 
     try {
       const returnTo = this.config.auth0Config.redirectUri;
@@ -104,7 +75,55 @@ export class NativescriptAuth0Common {
     }
   }
 
-  protected async fetchRefreshToken(code: string, verifier: string): Promise<string> {
+  /**
+   * Get or fetch an access token based on the refresh token
+   */
+  async getAccessToken(): Promise<string> {
+    const tokenExpire = ApplicationSettings.getNumber('access_token_expire');
+
+    const secureStorage = new SecureStorage();
+    const storedToken = secureStorage.getSync({ key: 'access_token' });
+    if (storedToken && tokenExpire && Date.now() <= tokenExpire) {
+      return storedToken;
+    }
+
+    const accessToken = await this.fetchAccessToken();
+    this.storeAccessToken(accessToken);
+    this.accessToken$.next(accessToken);
+
+    return accessToken;
+  }
+
+  private async fetchAccessToken(): Promise<string> {
+    const secureStorage = new SecureStorage();
+    const refreshToken = secureStorage.getSync({ key: 'refresh_token' });
+    if (!refreshToken) {
+      console.error("Can't fetch an access token without a refresh token");
+      return null;
+    }
+
+    try {
+      const response: HttpResponse = await Http.request({
+        url: 'https://' + this.config.auth0Config.domain + '/oauth/token',
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        content: JSON.stringify({
+          grant_type: 'refresh_token',
+          client_id: this.config.auth0Config.clientId,
+          refresh_token: refreshToken,
+        }),
+      });
+
+      return this.storeAccessToken(response.content.toJSON());
+    } catch (e) {
+      console.error('Issue when fetching an access token using a refresh token');
+      console.error(e);
+    }
+
+    return null;
+  }
+
+  protected async fetchRefreshToken(code: string, verifier: string): Promise<void> {
     if (!code || !verifier) {
       console.error('Missing code or verifier');
     }
@@ -123,34 +142,61 @@ export class NativescriptAuth0Common {
       }),
     });
 
-    const refreshToken = refresh_token_response.content.toJSON().refresh_token;
+    const json = refresh_token_response.content.toJSON();
+    this.storeRefreshToken(json);
+    this.storeAccessToken(json);
+  }
 
-    if (refreshToken) {
-      const secureStorage = new SecureStorage();
-      secureStorage.setSync({ key: 'refresh_token', value: refreshToken });
+  private storeAccessToken(json): string {
+    const expireSeconds = json.expires_in;
+    const accessToken = json.access_token;
+
+    if (!accessToken) {
+      throw new Error('Missing access token');
     }
+
+    const secureStorage = new SecureStorage();
+    secureStorage.setSync({ key: 'access_token', value: accessToken });
+
+    const expireDate = new Date();
+    expireDate.setSeconds(expireDate.getSeconds() + expireSeconds);
+    ApplicationSettings.setNumber('access_token_expire', expireDate.getTime());
+
+    return accessToken;
+  }
+
+  private storeRefreshToken(json): string {
+    const refreshToken = json.refresh_token;
+    if (!refreshToken) {
+      throw new Error('Missing refresh token');
+      return null;
+    }
+    const secureStorage = new SecureStorage();
+    secureStorage.setSync({ key: 'refresh_token', value: refreshToken });
 
     return refreshToken;
   }
 
-  protected prepareSignInAuthUrl(loginHint): string {
+  private prepareSignUpAuthUrl(loginHint: string): string {
+    const challenge: string = Base64.stringify(sha256(this.verifier)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+    return `https://${this.config.auth0Config.domain}/authorize?audience=${this.config.auth0Config.audience}&scope=offline_access&response_type=code&client_id=${this.config.auth0Config.clientId}&redirect_uri=${this.config.auth0Config.redirectUri}&code_challenge=${challenge}&code_challenge_method=S256&login_hint=${loginHint}&screen_hint=signup`;
+  }
+
+  private prepareSignInAuthUrl(loginHint): string {
     const challenge: string = Base64.stringify(sha256(this.verifier)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
     return `https://${this.config.auth0Config.domain}/authorize?audience=${this.config.auth0Config.audience}&scope=offline_access&response_type=code&client_id=${this.config.auth0Config.clientId}&redirect_uri=${this.config.auth0Config.redirectUri}&code_challenge=${challenge}&code_challenge_method=S256&login_hint=${loginHint}`;
   }
 
-  private async openInAppBrowser(authorizeUrl: string): Promise<string> {
+  private async fetchCodeInAppBrowser(authorizeUrl: string): Promise<string> {
     const response: AuthSessionResult = await InAppBrowser.openAuth(authorizeUrl, this.config.auth0Config.redirectUri);
 
     if (response.type === 'success' && response.url) {
-      // Split the string to obtain the code
+      // Split the string to obtain the code or the access token
       return response.url.split('=')[1];
     }
 
     throw ConnectionErrors.invalidToken();
-  }
-
-  private prepareSignUpAuthUrl(loginHint: string): string {
-    return `https://${this.config.auth0Config.domain}/authorize?audience=${this.config.auth0Config.audience}&response_type=token&client_id=${this.config.auth0Config.clientId}&redirect_uri=${this.config.auth0Config.redirectUri}&nonce=${Math.floor(Math.random() * 1000)}&screen_hint=signup&login_hint=${loginHint}`;
   }
 }
