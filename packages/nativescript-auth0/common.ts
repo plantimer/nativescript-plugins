@@ -75,10 +75,23 @@ export class NativescriptAuth0Common {
     }
   }
 
+  async getUserInfo(): Promise<object | null> {
+    const response: HttpResponse = await Http.request({
+      url: 'https://' + this.config.auth0Config.domain + '/userinfo',
+      method: 'GET',
+      headers: {
+        'content-type': 'application/json',
+        Authorization: 'Bearer ' + (await this.getAccessToken()),
+      },
+    });
+
+    return response?.content?.toJSON();
+  }
+
   /**
    * Get or fetch an access token based on the refresh token
    */
-  async getAccessToken(): Promise<string> {
+  async getAccessToken(): Promise<string | null> {
     const tokenExpire = ApplicationSettings.getNumber('access_token_expire');
 
     const secureStorage = new SecureStorage();
@@ -88,17 +101,15 @@ export class NativescriptAuth0Common {
     }
 
     const accessToken = await this.fetchAccessToken();
-    this.storeAccessToken(accessToken);
     this.accessToken$.next(accessToken);
 
     return accessToken;
   }
 
-  private async fetchAccessToken(): Promise<string> {
+  private async fetchAccessToken(): Promise<string | null> {
     const secureStorage = new SecureStorage();
     const refreshToken = secureStorage.getSync({ key: 'refresh_token' });
     if (!refreshToken) {
-      console.error("Can't fetch an access token without a refresh token");
       return null;
     }
 
@@ -147,13 +158,13 @@ export class NativescriptAuth0Common {
     this.storeAccessToken(json);
   }
 
-  private storeAccessToken(json): string {
-    const expireSeconds = json.expires_in;
-    const accessToken = json.access_token;
-
+  private storeAccessToken(json): string | null {
+    const accessToken = json?.access_token;
     if (!accessToken) {
-      throw new Error('Missing access token');
+      return null;
     }
+
+    const expireSeconds = json.expires_in;
 
     const secureStorage = new SecureStorage();
     secureStorage.setSync({ key: 'access_token', value: accessToken });
@@ -180,13 +191,13 @@ export class NativescriptAuth0Common {
   private prepareSignUpAuthUrl(loginHint: string): string {
     const challenge: string = Base64.stringify(sha256(this.verifier)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
-    return `https://${this.config.auth0Config.domain}/authorize?audience=${this.config.auth0Config.audience}&scope=offline_access&response_type=code&client_id=${this.config.auth0Config.clientId}&redirect_uri=${this.config.auth0Config.redirectUri}&code_challenge=${challenge}&code_challenge_method=S256&login_hint=${loginHint}&screen_hint=signup`;
+    return `https://${this.config.auth0Config.domain}/authorize?audience=${this.config.auth0Config.audience}&scope=offline_access%20openid%20profile&response_type=code&client_id=${this.config.auth0Config.clientId}&redirect_uri=${this.config.auth0Config.redirectUri}&code_challenge=${challenge}&code_challenge_method=S256&login_hint=${loginHint}&screen_hint=signup`;
   }
 
   private prepareSignInAuthUrl(loginHint): string {
     const challenge: string = Base64.stringify(sha256(this.verifier)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
-    return `https://${this.config.auth0Config.domain}/authorize?audience=${this.config.auth0Config.audience}&scope=offline_access&response_type=code&client_id=${this.config.auth0Config.clientId}&redirect_uri=${this.config.auth0Config.redirectUri}&code_challenge=${challenge}&code_challenge_method=S256&login_hint=${loginHint}`;
+    return `https://${this.config.auth0Config.domain}/authorize?audience=${this.config.auth0Config.audience}&scope=offline_access%20openid%20profile&response_type=code&client_id=${this.config.auth0Config.clientId}&redirect_uri=${this.config.auth0Config.redirectUri}&code_challenge=${challenge}&code_challenge_method=S256&login_hint=${loginHint}`;
   }
 
   private async fetchCodeInAppBrowser(authorizeUrl: string): Promise<string> {
