@@ -1,3 +1,3 @@
 import { NativescriptAuth0Common } from './common';
 
-export const NativescriptAuth0 = new NativescriptAuth0Common();
+export class NativeScriptAuth0 extends NativescriptAuth0Common {}

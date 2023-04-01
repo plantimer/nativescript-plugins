@@ -14,4 +14,4 @@ export type Auth0Config = {
   scope?: string;
 };
 
-export const NativescriptAuth0: NativescriptAuth0Common;
+export declare class NativeScriptAuth0 extends NativescriptAuth0Common {}

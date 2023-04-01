@@ -85,6 +85,11 @@ export class NativescriptAuth0Common {
       },
     });
 
+    if (response.statusCode !== 200) {
+      console.error('[' + response.statusCode + '] ' + response.content);
+      throw new Error('[getUserInfo] Unauthorized token');
+    }
+
     return response?.content?.toJSON();
   }
 
@@ -180,7 +185,6 @@ export class NativescriptAuth0Common {
     const refreshToken = json.refresh_token;
     if (!refreshToken) {
       throw new Error('Missing refresh token');
-      return null;
     }
     const secureStorage = new SecureStorage();
     secureStorage.setSync({ key: 'refresh_token', value: refreshToken });
