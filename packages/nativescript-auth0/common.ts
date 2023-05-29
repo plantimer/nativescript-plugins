@@ -43,8 +43,18 @@ export class NativescriptAuth0Common {
   }
 
   async signIn(loginHint = '') {
-    const code = await this.fetchCodeInAppBrowser(this.prepareSignInAuthUrl(loginHint));
-    await this.fetchRefreshToken(code, this.verifier);
+    try {
+      const code = await this.fetchCodeInAppBrowser(this.prepareSignInAuthUrl(loginHint));
+      await this.fetchRefreshToken(code, this.verifier);
+    } catch (e) {
+      console.error('Error during signIn', e);
+      const secureStorage = new SecureStorage();
+      secureStorage.removeSync({ key: 'refresh_token' });
+      secureStorage.removeSync({ key: 'access_token' });
+      ApplicationSettings.remove('access_token_expire');
+
+      return e;
+    }
   }
 
   async signUp(loginHint = '') {
@@ -96,10 +106,14 @@ export class NativescriptAuth0Common {
   /**
    * Get or fetch an access token based on the refresh token
    */
-  async getAccessToken(): Promise<string | null> {
-    const tokenExpire = ApplicationSettings.getNumber('access_token_expire');
-
+  async getAccessToken(force = false): Promise<string | null> {
     const secureStorage = new SecureStorage();
+
+    if (force) {
+      secureStorage.removeSync({ key: 'access_token' });
+    }
+
+    const tokenExpire = ApplicationSettings.getNumber('access_token_expire');
     const storedToken = secureStorage.getSync({ key: 'access_token' });
     if (storedToken && tokenExpire && Date.now() <= tokenExpire) {
       return storedToken;
