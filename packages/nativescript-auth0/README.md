@@ -1,7 +1,3 @@
-# IMPORTANT
-This plugin is not production ready and is still in development.
-Feel free to open pull requests and issues !
-
 # @plantimer/nativescript-auth0
 
 ```bash
@@ -42,9 +38,9 @@ const config = {
   }
 }
 
-NativescriptAuth0.setUp(config).signUp("email@provider.com");
-NativescriptAuth0.setUp(config).signIn();
-NativescriptAuth0.setUp(config).getAccessToken();
+Auth0.setUp(config).signUp("email@provider.com");
+Auth0.setUp(config).signIn();
+Auth0.setUp(config).getAccessToken();
 ```
 
 ### Angular Example
@@ -71,9 +67,9 @@ export class AppComponent {
       }
     }
 
-    NativescriptAuth0.setUp(config).signUp("email@provider.com");
-    NativescriptAuth0.setUp(config).signIn();
-    NativescriptAuth0.setUp(config).getAccessToken();
+    Auth0.setUp(config).signUp("email@provider.com");
+    Auth0.setUp(config).signIn();
+    Auth0.setUp(config).getAccessToken();
   }
 }
 ```

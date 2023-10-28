@@ -1,5 +1,5 @@
+import { Auth0Common } from './common';
 import { InAppBrowserOptions } from 'nativescript-inappbrowser/InAppBrowser.common';
-import { NativescriptAuth0Common } from './common';
 
 export type Config = {
   auth0Config: Auth0Config;
@@ -14,4 +14,6 @@ export type Auth0Config = {
   scope?: string;
 };
 
-export declare class NativeScriptAuth0 extends NativescriptAuth0Common {}
+export declare class Auth0 extends Auth0Common {}
+
+export * from './auth0-error';

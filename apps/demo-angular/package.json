@@ -1,0 +1,11 @@
+{
+  "main": "./src/main.ts",
+  "dependencies": {
+    "@nativescript/core": "file:../../node_modules/@nativescript/core",
+    "@plantimer/auth0": "file:../../dist/packages/auth0"
+  },
+  "devDependencies": {
+    "@nativescript/android": "~8.4.0",
+    "@nativescript/ios": "~8.4.0"
+  }
+}

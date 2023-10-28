@@ -1,15 +1,14 @@
-import { ApplicationSettings, Http, HttpResponse, isAndroid, Utils } from '@nativescript/core';
-import { Subject } from 'rxjs';
-import CryptoES from 'crypto-es';
+import { ApplicationSettings, Http, HttpResponse, isAndroid, Observable, Utils } from '@nativescript/core';
 import { SecureStorage } from '@nativescript/secure-storage';
 import { InAppBrowser } from 'nativescript-inappbrowser';
+import { Subject } from 'rxjs';
+import { Auth0Error, Config } from '.';
+import CryptoES from 'crypto-es';
 import { AuthSessionResult } from 'nativescript-inappbrowser/InAppBrowser.common';
-import { ConnectionErrors } from './connection-errors';
-import { Config } from './index';
 import Base64 = CryptoES.enc.Base64;
 import sha256 = CryptoES.SHA256;
 
-export class NativescriptAuth0Common {
+export class Auth0Common extends Observable {
   private config: Config;
   protected verifier: string;
   accessToken$ = new Subject<string>();
@@ -31,9 +30,14 @@ export class NativescriptAuth0Common {
     return benchStr;
   }
 
+  setTokens(json: string) {
+    this.storeRefreshToken(json);
+    this.storeAccessToken(json);
+  }
+
   setUp(config: Config) {
     this.config = config;
-    this.verifier = NativescriptAuth0Common.getRandomValues(32);
+    this.verifier = Auth0Common.getRandomValues(32);
 
     if (isAndroid) {
       InAppBrowser.mayLaunchUrl(this.prepareSignInAuthUrl(''), []);
@@ -42,37 +46,50 @@ export class NativescriptAuth0Common {
     return this;
   }
 
-  async signIn(loginHint = '') {
+  async signIn(loginHint = ''): Promise<boolean> {
     try {
       const code = await this.fetchCodeInAppBrowser(this.prepareSignInAuthUrl(loginHint));
+      if (!code) {
+        return false;
+      }
+
       await this.fetchRefreshToken(code, this.verifier);
     } catch (e) {
-      console.error('Error during signIn', e);
       const secureStorage = new SecureStorage();
-      secureStorage.removeSync({ key: 'refresh_token' });
-      secureStorage.removeSync({ key: 'access_token' });
-      ApplicationSettings.remove('access_token_expire');
+      secureStorage.removeSync({ key: '@plantimer/auth0_refresh_token' });
+      secureStorage.removeSync({ key: '@plantimer/auth0_access_token' });
+      ApplicationSettings.remove('@plantimer/auth0_access_token_expire');
 
-      return e;
+      throw new Auth0Error('Error during sign in', {
+        additionalInfo: 'Every token has been deleted from the device.',
+        error: e,
+      });
     }
+
+    return true;
   }
 
-  async signUp(loginHint = '') {
+  async signUp(loginHint = ''): Promise<boolean> {
     const code = await this.fetchCodeInAppBrowser(this.prepareSignUpAuthUrl(loginHint));
+    if (!code) {
+      return false;
+    }
+
     await this.fetchRefreshToken(code, this.verifier);
+
+    return true;
   }
 
-  async logOut(): Promise<void> {
+  async logOut(): Promise<boolean> {
     const secureStorage = new SecureStorage();
-    secureStorage.removeSync({ key: 'refresh_token' });
-    secureStorage.removeSync({ key: 'access_token' });
+    secureStorage.removeSync({ key: '@plantimer/auth0_refresh_token' });
+    secureStorage.removeSync({ key: '@plantimer/auth0_access_token' });
 
-    ApplicationSettings.remove('access_token_expire');
+    ApplicationSettings.remove('@plantimer/auth0_access_token_expire');
 
+    const returnTo = this.config.auth0Config.redirectUri;
+    const logout = 'https://' + this.config.auth0Config.domain + '/v2/logout?client_id=' + this.config.auth0Config.clientId;
     try {
-      const returnTo = this.config.auth0Config.redirectUri;
-      const logout = 'https://' + this.config.auth0Config.domain + '/v2/logout?client_id=' + this.config.auth0Config.clientId;
-
       if (await InAppBrowser.isAvailable()) {
         await InAppBrowser.openAuth(logout, returnTo, this.config.browserConfig);
       } else {
@@ -81,13 +98,24 @@ export class NativescriptAuth0Common {
 
       this.accessToken$.next('');
     } catch (e) {
-      console.error('Issue when disconnecting the user', e);
+      throw new Auth0Error("Failed to get the user's info", {
+        logout,
+        returnTo,
+        error: e,
+      });
     }
+
+    return true;
   }
 
-  async getUserInfo(): Promise<object | null> {
+  async getUserInfo(force = false): Promise<object | null> {
+    if (ApplicationSettings.hasKey('@plantimer/auth0_user_info') && !force) {
+      return JSON.parse(ApplicationSettings.getString('@plantimer/auth0_user_info'));
+    }
+
+    const url = 'https://' + this.config.auth0Config.domain + '/userinfo';
     const response: HttpResponse = await Http.request({
-      url: 'https://' + this.config.auth0Config.domain + '/userinfo',
+      url,
       method: 'GET',
       headers: {
         'content-type': 'application/json',
@@ -96,11 +124,18 @@ export class NativescriptAuth0Common {
     });
 
     if (response.statusCode !== 200) {
-      console.error('[' + response.statusCode + '] ' + response.content);
-      throw new Error('[getUserInfo] Unauthorized token');
+      throw new Auth0Error("Failed to get the user's info", {
+        url,
+        httpResponseStatusCode: response.statusCode,
+        httpResponseBody: response.content,
+      });
     }
 
-    return response?.content?.toJSON();
+    const userInfo = response?.content?.toJSON();
+
+    ApplicationSettings.setString('@plantimer/auth0_user_info', JSON.stringify(userInfo));
+
+    return userInfo;
   }
 
   /**
@@ -110,11 +145,11 @@ export class NativescriptAuth0Common {
     const secureStorage = new SecureStorage();
 
     if (force) {
-      secureStorage.removeSync({ key: 'access_token' });
+      secureStorage.removeSync({ key: '@plantimer/auth0_access_token' });
     }
 
-    const tokenExpire = ApplicationSettings.getNumber('access_token_expire');
-    const storedToken = secureStorage.getSync({ key: 'access_token' });
+    const tokenExpire = ApplicationSettings.getNumber('@plantimer/auth0_access_token_expire');
+    const storedToken = secureStorage.getSync({ key: '@plantimer/auth0_access_token' });
     if (storedToken && tokenExpire && Date.now() <= tokenExpire) {
       return storedToken;
     }
@@ -127,7 +162,7 @@ export class NativescriptAuth0Common {
 
   private async fetchAccessToken(): Promise<string | null> {
     const secureStorage = new SecureStorage();
-    const refreshToken = secureStorage.getSync({ key: 'refresh_token' });
+    const refreshToken = secureStorage.getSync({ key: '@plantimer/auth0_refresh_token' });
     if (!refreshToken) {
       return null;
     }
@@ -143,11 +178,13 @@ export class NativescriptAuth0Common {
           refresh_token: refreshToken,
         }),
       });
+      const json = response.content.toJSON();
 
-      return this.storeAccessToken(response.content.toJSON());
+      await Promise.all([this.storeRefreshToken(json), this.storeAccessToken(json)]);
+
+      return json.access_token;
     } catch (e) {
-      console.error('Issue when fetching an access token using a refresh token');
-      console.error(e);
+      throw new Auth0Error('Issue when fetching an access token using a refresh token', { error: e });
     }
 
     return null;
@@ -155,7 +192,7 @@ export class NativescriptAuth0Common {
 
   protected async fetchRefreshToken(code: string, verifier: string): Promise<void> {
     if (!code || !verifier) {
-      console.error('Missing code or verifier');
+      throw new Auth0Error('Missing code or verifier', {});
     }
 
     const refresh_token_response: HttpResponse = await Http.request({
@@ -186,11 +223,11 @@ export class NativescriptAuth0Common {
     const expireSeconds = json.expires_in;
 
     const secureStorage = new SecureStorage();
-    secureStorage.setSync({ key: 'access_token', value: accessToken });
+    secureStorage.setSync({ key: '@plantimer/auth0_access_token', value: accessToken });
 
     const expireDate = new Date();
     expireDate.setSeconds(expireDate.getSeconds() + expireSeconds);
-    ApplicationSettings.setNumber('access_token_expire', expireDate.getTime());
+    ApplicationSettings.setNumber('@plantimer/auth0_access_token_expire', expireDate.getTime());
 
     return accessToken;
   }
@@ -198,10 +235,11 @@ export class NativescriptAuth0Common {
   private storeRefreshToken(json): string {
     const refreshToken = json.refresh_token;
     if (!refreshToken) {
-      throw new Error('Missing refresh token');
+      return;
     }
+
     const secureStorage = new SecureStorage();
-    secureStorage.setSync({ key: 'refresh_token', value: refreshToken });
+    secureStorage.setSync({ key: '@plantimer/auth0_refresh_token', value: refreshToken });
 
     return refreshToken;
   }
@@ -218,7 +256,7 @@ export class NativescriptAuth0Common {
     return `https://${this.config.auth0Config.domain}/authorize?audience=${this.config.auth0Config.audience}&scope=offline_access%20openid%20profile&response_type=code&client_id=${this.config.auth0Config.clientId}&redirect_uri=${this.config.auth0Config.redirectUri}&code_challenge=${challenge}&code_challenge_method=S256&login_hint=${loginHint}`;
   }
 
-  private async fetchCodeInAppBrowser(authorizeUrl: string): Promise<string> {
+  private async fetchCodeInAppBrowser(authorizeUrl: string): Promise<string | false> {
     const response: AuthSessionResult = await InAppBrowser.openAuth(authorizeUrl, this.config.auth0Config.redirectUri);
 
     if (response.type === 'success' && response.url) {
@@ -226,6 +264,6 @@ export class NativescriptAuth0Common {
       return response.url.split('=')[1];
     }
 
-    throw ConnectionErrors.invalidToken();
+    return false;
   }
 }

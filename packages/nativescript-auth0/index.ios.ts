@@ -1,3 +1,3 @@
-import { NativescriptAuth0Common } from './common';
+import { Auth0Common } from './common';
 
-export class NativeScriptAuth0 extends NativescriptAuth0Common {}
+export class Auth0 extends Auth0Common {}
