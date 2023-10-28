@@ -2,11 +2,12 @@ import { ApplicationSettings, Http, HttpResponse, isAndroid, Observable, Utils }
 import { SecureStorage } from '@nativescript/secure-storage';
 import { InAppBrowser } from 'nativescript-inappbrowser';
 import { Subject } from 'rxjs';
-import { Auth0Error, Config } from '.';
 import CryptoES from 'crypto-es';
 import { AuthSessionResult } from 'nativescript-inappbrowser/InAppBrowser.common';
 import Base64 = CryptoES.enc.Base64;
 import sha256 = CryptoES.SHA256;
+import { Auth0Error } from './auth0-error';
+import { Config } from './index';
 
 export class Auth0Common extends Observable {
   private config: Config;

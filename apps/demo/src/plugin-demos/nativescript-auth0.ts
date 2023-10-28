@@ -1,6 +1,6 @@
 import { EventData, Page } from '@nativescript/core';
 import { DemoSharedNativescriptAuth0 } from '@demo/shared';
-import { Config, NativescriptAuth0 } from '@plantimer/nativescript-auth0';
+import { Config, Auth0 } from '@plantimer/nativescript-auth0';
 
 export function navigatingTo(args: EventData) {
   const page = <Page>args.object;
@@ -20,23 +20,23 @@ export class DemoAuth0ViewModel extends DemoSharedNativescriptAuth0 {
   accessToken = '';
 
   async signUp() {
-    const nsAuth0 = NativescriptAuth0.setUp(this.config);
+    const nsAuth0 = new Auth0().setUp(this.config);
     await nsAuth0.signUp();
     this.accessToken = await nsAuth0.getAccessToken();
   }
 
   async signIn() {
-    const nsAuth0 = NativescriptAuth0.setUp(this.config);
+    const nsAuth0 = new Auth0().setUp(this.config);
     await nsAuth0.signIn();
     this.accessToken = await nsAuth0.getAccessToken();
   }
 
   async getAccessToken() {
-    this.accessToken = await NativescriptAuth0.setUp(this.config).getAccessToken();
+    this.accessToken = await new Auth0().setUp(this.config).getAccessToken();
   }
 
   logOut() {
-    NativescriptAuth0.setUp(this.config).logOut();
+    new Auth0().setUp(this.config).logOut();
   }
 
   set clientId(clientId: string) {

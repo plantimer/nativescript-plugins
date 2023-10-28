@@ -24,7 +24,7 @@ This plugin uses the [InAppBrowser](https://github.com/proyecto26/nativescript-i
 ### Vanilla
 
 ```js
-import { NativescriptAuth0 } from '@plantimer/nativescript-auth0';
+import { Auth0 } from '@plantimer/nativescript-auth0';
 
 const config = {
   auth0Config: {
