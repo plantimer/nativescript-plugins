@@ -4,7 +4,7 @@
 npm install @plantimer/nativescript-auth0
 ```
 
-## How does it work
+## How does it work ?
 
 The only workflow currently supported is the [Authorization Code Grant with PKCE](https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow-with-proof-key-for-code-exchange-pkce) with a refresh token.
 
@@ -38,7 +38,7 @@ const config = {
   }
 }
 
-Auth0.setUp(config).signUp("email@provider.com");
+Auth0.setUp(config).signUp("email@provider.com"); // Optional hint to pre-fill the email field
 Auth0.setUp(config).signIn();
 Auth0.setUp(config).getAccessToken();
 ```
@@ -67,7 +67,7 @@ export class AppComponent {
       }
     }
 
-    Auth0.setUp(config).signUp("email@provider.com");
+    Auth0.setUp(config).signUp("email@provider.com"); // Optional hint to pre-fill the email field
     Auth0.setUp(config).signIn();
     Auth0.setUp(config).getAccessToken();
   }
