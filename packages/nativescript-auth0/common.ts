@@ -99,7 +99,7 @@ export class Auth0Common extends Observable {
 
       this.accessToken$.next('');
     } catch (e) {
-      throw new Auth0Error("Failed to get the user's info", {
+      throw new Auth0Error('Something happened while logging out', {
         logout,
         returnTo,
         error: e,
