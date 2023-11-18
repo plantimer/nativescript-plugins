@@ -2,12 +2,11 @@ import { ApplicationSettings, Http, HttpResponse, isAndroid, Observable, Utils }
 import { SecureStorage } from '@nativescript/secure-storage';
 import { InAppBrowser } from 'nativescript-inappbrowser';
 import { Subject } from 'rxjs';
-import CryptoES from 'crypto-es';
 import { AuthSessionResult } from 'nativescript-inappbrowser/InAppBrowser.common';
-import Base64 = CryptoES.enc.Base64;
-import sha256 = CryptoES.SHA256;
 import { Auth0Error } from './auth0-error';
 import { Config } from './index';
+import { Base64 } from 'crypto-es/lib/enc-base64';
+import { SHA256 } from 'crypto-es/lib/sha256';
 
 export class Auth0Common extends Observable {
   private config: Config;
@@ -246,13 +245,13 @@ export class Auth0Common extends Observable {
   }
 
   private prepareSignUpAuthUrl(loginHint: string): string {
-    const challenge: string = Base64.stringify(sha256(this.verifier)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    const challenge: string = Base64.stringify(SHA256(this.verifier)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
     return `https://${this.config.auth0Config.domain}/authorize?audience=${this.config.auth0Config.audience}&scope=offline_access%20openid%20profile%20email&response_type=code&client_id=${this.config.auth0Config.clientId}&redirect_uri=${this.config.auth0Config.redirectUri}&code_challenge=${challenge}&code_challenge_method=S256&login_hint=${loginHint}&screen_hint=signup`;
   }
 
   private prepareSignInAuthUrl(loginHint): string {
-    const challenge: string = Base64.stringify(sha256(this.verifier)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    const challenge: string = Base64.stringify(SHA256(this.verifier)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
     return `https://${this.config.auth0Config.domain}/authorize?audience=${this.config.auth0Config.audience}&scope=offline_access%20openid%20profile%20email&response_type=code&client_id=${this.config.auth0Config.clientId}&redirect_uri=${this.config.auth0Config.redirectUri}&code_challenge=${challenge}&code_challenge_method=S256&login_hint=${loginHint}`;
   }
