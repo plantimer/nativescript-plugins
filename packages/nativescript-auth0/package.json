@@ -1,6 +1,6 @@
 {
   "name": "@plantimer/nativescript-auth0",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Plugin wrapper for Auth0. It uses InAppBrowser and SecureStorage to safely authenticate users.",
   "main": "index",
   "typings": "index.d.ts",
