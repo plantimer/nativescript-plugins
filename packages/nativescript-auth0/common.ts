@@ -81,22 +81,27 @@ export class Auth0Common extends Observable {
   }
 
   async logOut(): Promise<boolean> {
-    const secureStorage = new SecureStorage();
-    secureStorage.removeSync({ key: '@plantimer/auth0_refresh_token' });
-    secureStorage.removeSync({ key: '@plantimer/auth0_access_token' });
-
-    ApplicationSettings.remove('@plantimer/auth0_access_token_expire');
-
     const returnTo = this.config.auth0Config.redirectUri;
     const logout = 'https://' + this.config.auth0Config.domain + '/v2/logout?client_id=' + this.config.auth0Config.clientId;
+
     try {
       if (await InAppBrowser.isAvailable()) {
-        await InAppBrowser.openAuth(logout, returnTo, this.config.browserConfig);
+        const response = await InAppBrowser.openAuth(logout, returnTo, this.config.browserConfig);
+        if (response.type === 'cancel') {
+          return false;
+        }
       } else {
         Utils.openUrl(logout);
       }
 
+      const secureStorage = new SecureStorage();
+      secureStorage.removeSync({ key: '@plantimer/auth0_refresh_token' });
+      secureStorage.removeSync({ key: '@plantimer/auth0_access_token' });
+
+      ApplicationSettings.remove('@plantimer/auth0_access_token_expire');
       this.accessToken$.next('');
+
+      return true;
     } catch (e) {
       throw new Auth0Error('Something happened while logging out', {
         logout,
@@ -104,8 +109,6 @@ export class Auth0Common extends Observable {
         error: e,
       });
     }
-
-    return true;
   }
 
   async getUserInfo(force = false): Promise<object | null> {
